@@ -1,0 +1,42 @@
+LAPORAN PROJECT UAS STRUKTUR DATAIMPLEMENTASI DIRECTED GRAPH DAN ALGORITMA BREADTH-FIRST SEARCH (BFS) PADA DECISION SUPPORT SYSTEM (DSS) REKOMENDASI PARIWISATA
+Nama : Achmad Sandy Faryoko
+Nim : 2501010066
+Mata Kuliah: Struktur Data 
+Sub Materi: Graph (Graf)  
+Bentuk Tugas: Project Akhir Mandiri/Kelompok  
+
+BAB 1
+PENDAHULUAN
+1.1Latar Belakang  
+ Sektor pariwisata merupakan salah satu industri yang berkembang pesat dan memiliki kontribusi besar terhadap perekonomian. Bagi para wisatawan, merencanakan rute perjalanan ke berbagai destinasi wisata sering kali menjadi tantangan tersendiri akibat keterbatasan informasi mengenai keterhubungan rute antar-tempat, variasi biaya (budget), serta kualitas destinasi (rating). Banyak wisatawan menghabiskan waktu luang hanya untuk menentukan rute mana yang paling optimal dan sesuai dengan preferensi pribadi mereka.  Guna mengatasi permasalahan tersebut, diperlukan sebuah sistem pendukung keputusan atau Decision Support System (DSS) yang mampu memberikan rekomendasi rute dan destinasi secara cerdas dan terstruktur. Dalam ilmu komputer, pemodelan rute perjalanan dunia nyata paling tepat direpresentasikan menggunakan struktur data Graph (Graf), di mana setiap tempat wisata bertindak sebagai Node/Vertex dan jalur penghubungnya bertindak sebagai Edge. Mengingat rute jalan sering kali memiliki aturan satu arah atau urutan logis tertentu, penggunaan Directed Graph (Graf Berarah) menjadi sangat relevan. Untuk melakukan penelusuran rute secara mendalam dan bertahap dari suatu titik awal, algoritma Breadth-First Search (BFS) digunakan untuk menjamin seluruh jalur alternatif dapat dieksplorasi secara objektif guna menghasilkan rekomendasi terbaik berdasarkan kriteria yang diinginkan pengguna.  
+1.2 Rumusan Masalah  
+Bagaimana mengimplementasikan konsep Directed Graph menggunakan Adjacency List untuk merepresentasikan rute perjalanan wisata secara real-time?   Bagaimana menerapkan algoritma Breadth-First Search (BFS) dalam melakukan penelusuran rute dan penyaringan data (filtering) untuk kepentingan komponen DSS?   Bagaimana merancang antarmuka (interface) aplikasi interaktif yang memudahkan pengguna melakukan manajemen data graph sekaligus mendapatkan rekomendasi keputusan secara transparan?   
+1.3 Tujuan   
+Mendesain model graph berarah dari studi kasus rute pariwisata dunia nyata.  Mengimplementasikan algoritma BFS pada DSS untuk menghasilkan rekomendasi keputusan pariwisata yang dioptimasi berdasarkan rating dan budget.  Membuat aplikasi interaktif berbasis web menggunakan teknologi Streamlit untuk visualisasi graph dan pelacakan log perhitungan.  
+1.4 Manfaat   Bagi Wisatawan:
+Membantu mempermudah pengambilan keputusan pemilihan destinasi dan rute wisata secara cepat, objektif, dan sesuai kondisi finansial maupun preferensi kategori.  Bagi Mahasiswa: Mengembangkan kemampuan analisis dalam mentransformasikan teori abstrak struktur data graph ke dalam solusi aplikatif di dunia nyata.
+
+BAB 2
+DASAR TEORI
+2.1 Struktur Data Graph   
+Graph adalah struktur data non-linear yang terdiri dari sekumpulan simpul (Node atau Vertex) dan sekumpulan garis penghubung (Edge). Secara matematis, graph dinotasikan sebagai $G = (V, E)$. Pada project ini, jenis graph yang digunakan adalah Directed Graph (Graf Berarah), artinya setiap edge memiliki arah spesifik dari node asal menuju node tujuan.  Representasi internal yang dipilih adalah Adjacency List (Daftar Kebertetanggaan), di mana setiap node memetakan daftar tetangga langsungnya menggunakan struktur array atau list. Pilihan ini sangat efisien dalam menghemat memori untuk graf yang renggang (sparse graph) dibandingkan menggunakan matriks tetangga (Adjacency Matrix).  
+2.2 Decision Support System (DSS)   
+Decision Support System (DSS) atau Sistem Pendukung Keputusan adalah sistem berbasis komputer yang membantu pengambil keputusan memanfaatkan data dan model untuk menyelesaikan masalah yang tidak terstruktur. DSS dalam aplikasi ini bekerja dengan menyaring rute alternatif yang ditemukan oleh algoritma pencarian, kemudian melakukan pembobotan serta pengurutan (sorting) berdasarkan nilai kualitas seperti rating tertinggi guna mencapai optimasi keputusan.  
+2.3 Algoritma Breadth-First Search (BFS)   
+BFS adalah algoritma penelusuran graph yang dimulai dari node akar/awal dan mengeksplorasi semua node tetangga pada level kedalaman saat ini sebelum berpindah ke node pada level berikutnya. Algoritma ini memanfaatkan struktur data antrean (Queue) dengan prinsip First-In, First-Out (FIFO). Dalam konteks rute pariwisata, BFS menjamin penemuan semua variasi jalur dari titik awal menuju destinasi target tanpa ada rute yang terlewat.  
+
+BAB 3
+ANALISIS DAN PERANCANGAN
+3.1 Analisis Masalah  
+Wisatawan sering menghadapi rute searah atau keterhubungan antar-tempat wisata yang kompleks. Sistem konvensional umumnya hanya menampilkan daftar tempat wisata tanpa memperhatikan apakah tempat tersebut dapat dijangkau secara berurutan dari posisi wisatawan saat ini. Oleh karena itu, diperlukan sistem yang mengintegrasikan status posisi terkini pengguna dengan kriteria preferensi wisata (Kategori & Budget) melalui penelusuran graf.  
+3.2 Desain Graph dan Struktur Node/Edge   
+Sistem memodelkan entitas pariwisata ke dalam komponen struktur data sebagai berikut:  Node (Vertex): Merepresentasikan destinasi wisata atau titik transit. Setiap node menyimpan metadata kriteria berupa Kategori (Alam, Budaya, Kuliner, Sejarah, Transit), Budget (Murah, Sedang, Mahal), dan Rating (skala 1.0 - 5.0).  Edge (Arus Berarah): Merepresentasikan akses rute langsung atau keterhubungan searah dari satu tempat ke tempat lain.  
+3.3 Alur Logika Perhitungan (Flowchart & Use Case)   
+Secara naratif, aliran data dalam sistem ini dirancang dengan mekanisme sebagai berikut:Use Case Interaksi: Pengguna memasukkan parameter lokasi awal (Start Node), memilih kategori preferensi, serta budget target pada antarmuka. Pengguna juga dapat secara dinamis menambahkan node dan edge baru pada panel kendali.  Logika Eksekusi BFS & DSS:Inisialisasi sebuah antrean kosong (Queue) dan masukkan jalur awal yang berisi [start_node].Selama antrean tidak kosong, keluarkan jalur pertama dari antrean tersebut.Ambil elemen terakhir dari jalur tersebut untuk ditetapkan sebagai current_node.Periksa kesesuaian metadata current_node terhadap kriteria yang dicari. Jika Kategori dan Budget sesuai dengan input preferensi pengguna, masukkan destinasi tersebut ke dalam daftar rekomendasi keputusan.  Evaluasi seluruh simpul tetangga dari current_node melalui data Adjacency List. Untuk setiap tetangga yang belum pernah dikunjungi pada jalur saat ini (guna mencegah siklus/looping), bentuk jalur baru dan masukkan kembali ke dalam antrean untuk dieksplorasi pada tahap berikutnya.  Setelah penelusuran selesai, lakukan pengurutan (sorting) daftar rekomendasi secara menurun berdasarkan nilai rating tertinggi untuk menyajikan peringkat keputusan terbaik.  
+
+BAB 4
+IMPLEMENTASI
+4.1 Arsitektur Perangkat Lunak dan Penjelasan Sistem   
+Sistem ini diimplementasikan menggunakan bahasa pemrograman Python dengan framework Streamlit untuk membangun antarmuka web interaktif. Seluruh logika relasional graf dibungkus ke dalam sebuah struktur kelas bernama WisataDSSGraph.  Penyimpanan graf dilakukan secara dinamis memanfaatkan Session State dari Streamlit, sehingga modifikasi penambahan node atau edge yang dilakukan pengguna tidak hilang saat halaman web memuat ulang (rerun). Pustaka NetworkX dikombinasikan dengan Matplotlib bertanggung jawab mengonversi representasi daftar kebertetanggaan internal menjadi visualisasi graf berarah interaktif secara langsung.  
+4.2 Tampilan Sistem  
+Aplikasi dibagi secara ergonomis menjadi dua bagian utama:  Panel Samping (Sidebar): Berfungsi sebagai menu manajemen data graf (Kelola Data Graph), di mana pengguna dapat mengisi form input teks, dropdown, dan slider untuk menambahkan destinasi atau rute baru secara real-time.  Halaman Utama (Main Page): Dibagi menjadi dua kolom berimbang. Kolom pertama menampilkan kanvas visualisasi topologi graf berarah. Kolom kedua memuat form konsultasi DSS, penampil pelacakan log perhitungan algoritma BFS, serta hasil akhir pemeringkatan keputusan rekomendasi.  
