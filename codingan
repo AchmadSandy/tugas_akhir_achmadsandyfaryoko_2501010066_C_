@@ -1,0 +1,207 @@
+import streamlit as strl
+import networkx as nx
+import matplotlib.pyplot as plt
+from collections import deque
+
+# -------------------------------------------------------------------------
+# STRUCTURE DATA & DSS LAYER (Menggunakan Directed Graph & BFS)
+# -------------------------------------------------------------------------
+class WisataDSSGraph:
+    def __init__(self):
+        # Menggunakan Adjacency List untuk representasi Directed Graph [cite: 49, 52]
+        self.adjacency_list = {}
+        # Menyimpan metadata node untuk proses rekomendasi DSS [cite: 17, 98]
+        self.node_metadata = {}
+
+    def add_node(self, name, category, budget, rating):
+        """Menambahkan Node (Tempat Wisata/Titik Transit) beserta bobot kriteria [cite: 68, 98]"""
+        if name not in self.adjacency_list:
+            self.adjacency_list[name] = []
+            self.node_metadata[name] = {
+                "category": category, # Alam, Kuliner, Budaya, Sejarah
+                "budget": budget,     # Murah, Sedang, Mahal
+                "rating": rating      # Skala 1.0 - 5.0 [cite: 146]
+            }
+
+    def add_edge(self, source, destination):
+        """Menambahkan Edge (Rute Berarah / Directed Edge) [cite: 52, 68, 98]"""
+        if source in self.adjacency_list and destination in self.adjacency_list:
+            if destination not in self.adjacency_list[source]:
+                self.adjacency_list[source].append(destination)
+
+    def bfs_search_routes(self, start_node, target_category, target_budget):
+        """
+        Algoritma Utama: Breadth-First Search (BFS) [cite: 55, 57]
+        Mencari semua jalur alternatif dan melakukan proses perhitungan filter DSS [cite: 14, 71]
+        """
+        queue = deque([[start_node]])
+        all_paths = []
+        recommendations = []
+        process_log = [] # Untuk menampilkan proses perhitungan/tracking algoritma 
+
+        process_log.append(f"Memulai pencarian BFS dari titik awal: {start_node}")
+
+        while queue:
+            path = queue.popleft()
+            current_node = path[-1]
+
+            process_log.append(f"Mengunjungi Node: {current_node} | Jalur saat ini: {' -> '.join(path)}")
+
+            # Cek kriteria DSS untuk node saat ini 
+            meta = self.node_metadata[current_node]
+            if meta["category"] == target_category and meta["budget"] == target_budget:
+                if current_node not in [rec['node'] for rec in recommendations]:
+                    recommendations.append({
+                        "node": current_node,
+                        "path": " -> ".join(path),
+                        "score": meta["rating"] # Basis optimasi keputusan berdasarkan rating tertinggi [cite: 16, 17]
+                    })
+
+            # Ambil tetangga (Directed) 
+            neighbors = self.adjacency_list.get(current_node, [])
+            for neighbor in neighbors:
+                if neighbor not in path: # Menghindari cyclic loop dalam rute pencarian
+                    new_path = list(path)
+                    new_path.append(neighbor)
+                    queue.append(new_path)
+                    all_paths.append(new_path)
+
+        # Mengurutkan rekomendasi keputusan berdasarkan score/rating tertinggi (Fungsi Optimasi DSS) [cite: 16, 17]
+        recommendations = sorted(recommendations, key=lambda x: x['score'], reverse=True)
+        
+        return recommendations, process_log, all_paths
+
+# -------------------------------------------------------------------------
+# INISIALISASI DATASET SEEDING (Agar aplikasi langsung terisi data saat dibuka)
+# -------------------------------------------------------------------------
+if 'dss_graph' not in strl.session_state:
+    graph = WisataDSSGraph()
+    
+    # Menambahkan Node Destinasi Wisata awal [cite: 140]
+    graph.add_node("Gerbang Kota", "Transit", "Murah", 5.0)
+    graph.add_node("Pantai Kuta", "Alam", "Murah", 4.5)
+    graph.add_node("Tanah Lot", "Budaya", "Sedang", 4.7)
+    graph.add_node("Museum Bajra", "Sejarah", "Murah", 4.2)
+    graph.add_node("Sate Lilit Premium", "Kuliner", "Sedang", 4.8)
+    graph.add_node("Ubud Art Market", "Budaya", "Sedang", 4.4)
+    graph.add_node("Resto Seafood Jimbaran", "Kuliner", "Mahal", 4.6)
+    graph.add_node("Tebing Uluwatu", "Alam", "Sedang", 4.9)
+
+    # Menambahkan Directed Edge (Rute perjalanan searah antar destinasi) 
+    graph.add_edge("Gerbang Kota", "Pantai Kuta")
+    graph.add_edge("Gerbang Kota", "Museum Bajra")
+    graph.add_edge("Pantai Kuta", "Tanah Lot")
+    graph.add_edge("Pantai Kuta", "Sate Lilit Premium")
+    graph.add_edge("Museum Bajra", "Ubud Art Market")
+    graph.add_edge("Tanah Lot", "Resto Seafood Jimbaran")
+    graph.add_edge("Sate Lilit Premium", "Tebing Uluwatu")
+    graph.add_edge("Ubud Art Market", "Tebing Uluwatu")
+    
+    strl.session_state['dss_graph'] = graph
+
+# -------------------------------------------------------------------------
+# INTERFACE UTAMA STREAMLIT [cite: 74, 79]
+# -------------------------------------------------------------------------
+strl.set_page_config(page_title="DSS Rekomendasi Wisata - Graph BFS", layout="wide")
+
+strl.title("🗺️ Decision Support System (DSS) Rekomendasi Wisata")
+strl.subheader("Implementasi Directed Graph & Algoritma Breadth-First Search (BFS) [cite: 2, 52, 57]")
+
+current_graph = strl.session_state['dss_graph']
+
+# Sidebar untuk manajemen Node dan Edge (Memenuhi kriteria Input Data) 
+with strl.sidebar:
+    strl.header("🔧 Kelola Data Graph")
+    
+    with strl.expander("➕ Tambah Node (Tempat Wisata)"):
+        node_name = strl.text_input("Nama Tempat")
+        node_cat = strl.selectbox("Kategori", ["Alam", "Budaya", "Kuliner", "Sejarah", "Transit"])
+        node_bg = strl.selectbox("Biaya/Budget", ["Murah", "Sedang", "Mahal"])
+        node_rt = strl.slider("Rating Wisata", 1.0, 5.0, 4.5, step=0.1)
+        
+        if strl.button("Simpan Node"):
+            if node_name:
+                current_graph.add_node(node_name, node_cat, node_bg, node_rt)
+                strl.success(f"Node '{node_name}' berhasil ditambahkan!")
+                strl.rerun()
+            else:
+                strl.error("Nama tempat tidak boleh kosong!")
+
+    with strl.expander("➕ Tambah Rute Berarah (Directed Edge)"):
+        nodes_list = list(current_graph.adjacency_list.keys())
+        src_node = strl.selectbox("Dari Node", nodes_list, key="src")
+        dest_node = strl.selectbox("Ke Node", nodes_list, key="dest")
+        
+        if strl.button("Hubungkan Rute"):
+            if src_node != dest_node:
+                current_graph.add_edge(src_node, dest_node)
+                strl.success(f"Rute Berarah {src_node} ➔ {dest_node} berhasil dibuat!")
+                strl.rerun()
+            else:
+                strl.error("Node asal dan tujuan tidak boleh sama!")
+
+# Layout Utama: Dibagi menjadi 2 Kolom (Visualisasi & Pengambilan Keputusan)
+col1, col2 = strl.columns([1, 1])
+
+with col1:
+    strl.header("📊 Visualisasi Interaktif Real-Time [cite: 69, 131]")
+    
+    # Mengonversi adjacency list internal ke NetworkX untuk visualisasi Matplotlib [cite: 49]
+    G = nx.DiGraph() # DiGraph = Directed Graph 
+    
+    for node, metadata in current_graph.node_metadata.items():
+        G.add_node(node, **metadata)
+        
+    for source, targets in current_graph.adjacency_list.items():
+        for target in targets:
+            G.add_edge(source, target)
+            
+    fig, ax = plt.subplots(figsize=(7, 6))
+    pos = nx.spring_layout(G, seed=42)
+    
+    # Menggambar graph secara visual
+    nx.draw_networkx_nodes(G, pos, node_size=1600, node_color='#4A90E2', ax=ax)
+    nx.draw_networkx_edges(G, pos, width=2, arrowstyle='->', arrowsize=20, edge_color='#888888', ax=ax)
+    nx.draw_networkx_labels(G, pos, font_size=9, font_weight='bold', font_color='black', ax=ax)
+    
+    plt.title("Peta Rute Perjalanan Berarah (Directed Graph) ", fontsize=12)
+    plt.axis('off')
+    strl.pyplot(fig)
+
+with col2:
+    strl.header("🤖 Konsultasi DSS & Rekomendasi [cite: 17, 72]")
+    
+    # Form Input Kriteria Preferensi User 
+    nodes_available = list(current_graph.adjacency_list.keys())
+    start_point = strl.selectbox("Lokasi Kamu Saat Ini (Start Node):", nodes_available)
+    
+    c_pref, b_pref = strl.columns(2)
+    with c_pref:
+        pref_category = strl.selectbox("Pilih Kategori Wisata yang Diinginkan:", ["Alam", "Budaya", "Kuliner", "Sejarah"])
+    with b_pref:
+        pref_budget = strl.selectbox("Pilih Budget Kamu:", ["Murah", "Sedang", "Mahal"])
+        
+    if strl.button("🎯 Proses Analisis Keputusan", type="primary"):
+        # Eksekusi Algoritma BFS dan Logika DSS [cite: 57, 71]
+        recs, logs, paths = current_graph.bfs_search_routes(start_point, pref_category, pref_budget)
+        
+        strl.write("---")
+        
+        # 1. MENAMPILKAN PROSES PERHITUNGAN 
+        with strl.expander("🔍 Lihat Jalur & Log Perhitungan Algoritma BFS "):
+            for log in logs:
+                strl.caption(log)
+        
+        # 2. MENAMPILKAN HASIL REKOMENDASI (Output DSS) 
+        strl.subheader("🎯 Hasil Rekomendasi Keputusan Terbaik ")
+        if recs:
+            strl.success(f"Ditemukan {len(recs)} destinasi wisata yang cocok dengan preferensi Anda!")
+            for idx, rec in enumerate(recs):
+                strl.markdown(f"""
+                ### *Peringkat {idx+1}: {rec['node']}*
+                * **Jalur Rute yang Dilewati:** {rec['path']} 
+                * **Kriteria Rating Keindahan:** ⭐ {rec['score']}/5.0 [cite: 146]
+                * **Status Keputusan:** Sangat Direkomendasikan untuk dikunjungi lewat jalur di atas. [cite: 17]
+                """)
+        else:
+            strl.warning("Tidak ditemukan rute tujuan wisata yang pas dengan kriteria preferensi atau rute buntu dari lokasi Anda.")
